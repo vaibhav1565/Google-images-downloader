@@ -33,7 +33,8 @@ def setup_driver():
 
 
 def scroll_to_bottom(driver):
-    last_height = driver.execute_script("return document.body.scrollHeight")
+    previous_scroll_height = driver.execute_script(
+        "return document.body.scrollHeight")
     while True:
         # Scroll down to the bottom of the page
         driver.execute_script(
@@ -41,20 +42,17 @@ def scroll_to_bottom(driver):
         # Wait for the page to load more content
         time.sleep(2.5)
         # Calculate the new scroll height
-        new_height = driver.execute_script("return document.body.scrollHeight")
+        current_scroll_height = driver.execute_script(
+            "return document.body.scrollHeight")
         # Check if the page has finished loading (i.e., no more scroll)
-        if new_height == last_height:
+        if current_scroll_height == previous_scroll_height:
             break
-        last_height = new_height  # Update last_height to the new value
+        # Update previous_scroll_height to the new value
+        previous_scroll_height = current_scroll_height
     driver.execute_script("window.scrollTo(0,0);")
 
 
-query = "Polar bear"
-if sys.argv[1:]:
-    query = sys.argv[1]
-
-
-def scrape_images(url_queue: Queue,  show_text: bool = True):
+def scrape_images(image_url_queue: Queue, query: str, print_urls: bool = True):
     driver = setup_driver()
     driver.get(f'https://www.google.com/search?q={query}&udm=2')
 
@@ -63,46 +61,52 @@ def scrape_images(url_queue: Queue,  show_text: bool = True):
     scroll_to_bottom(driver)
 
     images = driver.find_elements(By.CSS_SELECTOR, images_selector)
-    selector = "img.sFlh5c.FyHeAf.iPVvYb"
-    selector2 = "img.sFlh5c.FyHeAf"
-    src = ''
-    images_count = 1
+    primary_selector = "img.sFlh5c.FyHeAf.iPVvYb"
+    fallback_selector = "img.sFlh5c.FyHeAf"
+    image_url = ''
+    image_index = 1
 
     images[0].click()
     try:
         WebDriverWait(driver, 15).until(EC.presence_of_element_located(
-            (By.CSS_SELECTOR, selector)
+            (By.CSS_SELECTOR, primary_selector)
         ))
-        img = driver.find_element(By.CSS_SELECTOR, selector)
+        image_element = driver.find_element(By.CSS_SELECTOR, primary_selector)
     except:
-        img = driver.find_element(By.CSS_SELECTOR, selector2)
-        print("--------------------Selector 2--------------------")
+        image_element = driver.find_element(By.CSS_SELECTOR, fallback_selector)
+        print("--------------------Fallback selector--------------------")
 
-    src = img.get_attribute('src')
-    url_queue.put((images_count, src))
-    print(f"{images_count}. Scraped URL: {src}")
+    image_url = image_element.get_attribute('src')
+    image_url_queue.put((image_index, image_url))
+    if print_urls:
+        print(f"{image_index}. Scraped URL: {image_url}")
 
-    images_count += 1
-    l = len(images)
-    while images_count <= l:
+    image_index += 1
+    total_images = len(images)
+    while image_index <= total_images:
         try:
-            images[images_count - 1].click()
+            images[image_index - 1].click()
             WebDriverWait(driver, 15).until(EC.presence_of_element_located(
-                (By.CSS_SELECTOR, selector)
+                (By.CSS_SELECTOR, primary_selector)
             ))
-            img = driver.find_element(By.CSS_SELECTOR, selector)
+            image_element = driver.find_element(
+                By.CSS_SELECTOR, primary_selector)
         except:
             print("--------------------Selector 2--------------------")
-            img = driver.find_elements(By.CSS_SELECTOR, selector2)[1]
-            h1 = driver.find_element( By.XPATH, '//*[@id="Sva75c"]/div[2]/div[2]/div/div[2]/c-wiz/div/div[5]/div[1]/div/div[1]/a[1]/h1')
-            print(h1.text)
+            image_element = driver.find_elements(
+                By.CSS_SELECTOR, fallback_selector)[1]
+            image_title = driver.find_element(
+                By.XPATH, '//*[@id="Sva75c"]/div[2]/div[2]/div/div[2]/c-wiz/div/div[5]/div[1]/div/div[1]/a[1]/h1')
+            print(image_title.text)
 
-        src = img.get_attribute('src')
-        url_queue.put((images_count, src))
-        print(f"{images_count}. Scraped URL: {src}")
-        images_count += 1
-
+        image_url = image_element.get_attribute('src')
+        image_url_queue.put((image_index, image_url))
+        if print_urls:
+            print(f"{image_index}. Scraped URL: {image_url}")
+        image_index += 1
 
 if __name__ == '__main__':
-    url_queue = Queue()
-    scrape_images(url_queue, show_text = True)
+    query = sys.argv[1]
+
+    image_url_queue = Queue()
+    scrape_images(image_url_queue, query)

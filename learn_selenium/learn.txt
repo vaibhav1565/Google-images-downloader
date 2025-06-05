@@ -1,0 +1,134 @@
+selenium documentation
+XPATH
+
+
+WebDriver will wait until the page has fully loaded (that is, the “onload” event has fired) before returning control to your test or script. Be aware that if your page uses a lot of AJAX on load then WebDriver may not know when it has completely loaded. If you need to ensure such pages are fully loaded then you can use waits.
+
+You can also look for a link by its text, but be careful! The text must be an exact match!
+It is possible to call send_keys on any element, which makes it possible to test keyboard shortcuts such as those used on GMail.
+
+3.2 FILLING IN FORMS
+element = driver.find_element(By.XPATH, "//select[@name='name']")
+all_options = element.find_elements(By.TAG_NAME, "option")
+for option in all_options:
+    print("Value is: %s" % option.get_attribute("value"))
+    option.click()
+
+WebDriver has the convenience method “submit” on every element. If you call this on an element within a form, WebDriver will walk up the DOM until it finds the enclosing form and then calls submit on that. If the element isn’t in a form, then the NoSuchElementException will be raised:
+element.submit()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+4
+ID = "id"
+NAME = "name"
+XPATH = "xpath"
+LINK_TEXT = "link text"
+PARTIAL_LINK_TEXT = "partial link text"
+TAG_NAME = "tag name"
+CLASS_NAME = "class name"
+CSS_SELECTOR = "css selector"
+
+a NoSuchElementException will be raised.
+
+
+find_element
+find_elements
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+5
+WAITING
+
+1) EXPLICIT WAITING
+
+By default, WebDriverWait calls the ExpectedCondition every 500 milliseconds until it returns success. ExpectedCondition will return true (Boolean) in case of success or not null if it fails to locate an element.
+
+
+    title_is
+
+    title_contains
+
+    presence_of_element_located
+
+    visibility_of_element_located
+
+    visibility_of
+
+    presence_of_all_elements_located
+
+    text_to_be_present_in_element
+
+    text_to_be_present_in_element_value
+
+    frame_to_be_available_and_switch_to_it
+
+    invisibility_of_element_located
+
+    element_to_be_clickable
+
+    staleness_of
+
+    element_to_be_selected
+
+    element_located_to_be_selected
+
+    element_selection_state_to_be
+
+    element_located_selection_state_to_be
+
+    alert_is_present
+
+
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.wait import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+
+driver = webdriver.Firefox()
+driver.get("http://somedomain/url_that_delays_loading")
+try:
+    element = WebDriverWait(driver, 10).until(
+        EC.presence_of_element_located((By.ID, "myDynamicElement"))
+    )
+finally:
+    driver.quit()

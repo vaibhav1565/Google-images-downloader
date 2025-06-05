@@ -16,9 +16,7 @@ success = 0
 failure = 0
 lock = threading.Lock()  # To protect shared counters
 
-query = "Polar bear"
-if sys.argv[1:]:
-    query = sys.argv[1]
+query = sys.argv[1]
 os.makedirs(query, exist_ok=True)
 
 
@@ -47,6 +45,7 @@ def download_image(src, idx):
                 file.write(response.content)
             with lock:
                 success += 1
+            print(f"{idx}. Finished downloading {src}")
         else:
             print(f"Failed to download {src}: {response.status_code}")
             with lock:
@@ -84,7 +83,7 @@ def main():
         threads.append(thread)
 
     # Start the scraping process in a separate thread
-    scraper_thread = threading.Thread(target=scrape_images, args=(url_queue,))
+    scraper_thread = threading.Thread(target=scrape_images, args=(url_queue, query, False))
     scraper_thread.start()
 
     # Wait for the scraper to finish
