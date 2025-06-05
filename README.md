@@ -1,10 +1,10 @@
-# Google Image Downloader
+# Google Images Downloader
 
-- **crawler.py**: Extracts image URLs from Google.  
-- **downloader.py**: Extracts image URLs and downloads images.
-
-**Prerequisite**: Chromedriver is required.  
+**Prerequisite**: [chromedriver](https://developer.chrome.com/docs/chromedriver/downloads) is required. Put chromedriver in the same directory. The chromedriver version must match the Chrome's version.
 
 ## Dependencies
-- `selenium`  
+- `selenium`
 - `requests`
+
+## To run
+- `python downloader.py <search term>`
