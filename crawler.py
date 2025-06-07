@@ -32,24 +32,26 @@ def setup_driver():
         sys.exit(1)
 
 
-def scroll_to_bottom(driver):
-    previous_scroll_height = driver.execute_script(
-        "return document.body.scrollHeight")
+def scroll_to_bottom(driver, check_interval=0.5, max_time=60):
+    start_time = time.time()
+
     while True:
-        # Scroll down to the bottom of the page
         driver.execute_script(
             "window.scrollTo(0, document.body.scrollHeight);")
-        # Wait for the page to load more content
-        time.sleep(2.5)
-        # Calculate the new scroll height
-        current_scroll_height = driver.execute_script(
-            "return document.body.scrollHeight")
-        # Check if the page has finished loading (i.e., no more scroll)
-        if current_scroll_height == previous_scroll_height:
+        time.sleep(check_interval)
+
+        try:
+            footer = driver.find_element(By.CSS_SELECTOR, "span.B4GxFc")
+            if footer.is_displayed():
+                break
+        except:
+            pass  # Footer not found yet
+
+        if time.time() - start_time > max_time:
+            print("Reached max scroll time without finding footer.")
             break
-        # Update previous_scroll_height to the new value
-        previous_scroll_height = current_scroll_height
-    driver.execute_script("window.scrollTo(0,0);")
+
+    driver.execute_script("window.scrollTo(0, 0);")
 
 
 def scrape_images(image_url_queue: Queue, query: str, print_urls: bool = True):
