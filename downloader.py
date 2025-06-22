@@ -17,13 +17,13 @@ failure = 0
 lock = threading.Lock()  # To protect shared counters
 
 query = sys.argv[1]
-os.makedirs(query, exist_ok=True)
-
+try:
+    os.mkdir(query)
+    print(f"Directory '{query}' created successfully.")
+except FileExistsError:
+    print(f"Directory '{query}' already exists.")
 
 def download_image(src, idx):
-    """
-    Downloads an image from the provided src URL and saves it with a unique index.
-    """
     global success, failure
     extension = '.png'
     pattern = re.compile(r"\.([a-zA-Z]+)$")
@@ -55,24 +55,19 @@ def download_image(src, idx):
         with lock:
             failure += 1
 
-
 def worker():
     """
     Worker thread function that processes URLs from the queue and downloads images.
     """
     while True:
-        item = url_queue.get()  # Get a URL from the queue
+        item = url_queue.get()
         if item is None:  # Sentinel to shut down the worker
             break
         idx, url = item
-        download_image(url, idx)
-        url_queue.task_done()  # Mark the task as done
-
+        download_image(url, idx + 1)
+        url_queue.task_done()
 
 def main():
-    """
-    Main function that orchestrates the scraping and downloading process.
-    """
     num_workers = 5
     threads = []
 
@@ -102,7 +97,6 @@ def main():
     print(f'Successfully downloaded {success} images')
     if failure:
         print(f'{failure} images not downloaded')
-
 
 if __name__ == "__main__":
     main()

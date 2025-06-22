@@ -31,7 +31,6 @@ def setup_driver():
         print(f"Error initializing Chrome driver: {e}")
         sys.exit(1)
 
-
 def scroll_to_bottom(driver, check_interval=0.5, max_time=60):
     start_time = time.time()
 
@@ -52,10 +51,9 @@ def scroll_to_bottom(driver, check_interval=0.5, max_time=60):
             break
 
     driver.execute_script("window.scrollTo(0, 0);")
-    print(f"Total time taken for scrolling- {(time.time() - start_time):.2f} seconds")
+    print(f"Total time taken for scrolling to bottom of page- {(time.time() - start_time):.2f} seconds")
 
-
-def scrape_images(image_url_queue: Queue, query: str, print_urls: bool = True):
+def scrape_images(image_url_queue, query, print_urls = True):
     driver = setup_driver()
     driver.get(f'https://www.google.com/search?q={query}&udm=2')
 
@@ -67,79 +65,35 @@ def scrape_images(image_url_queue: Queue, query: str, print_urls: bool = True):
     primary_selector = "img.sFlh5c.FyHeAf.iPVvYb"
     fallback_selector = "img.sFlh5c.FyHeAf"
     image_url = ''
-    image_index = 1
+    image_index = 0
 
-    images[0].click()
-    is_fallback = False
-    try:
-        WebDriverWait(driver, 15).until(EC.visibility_of_element_located(
-            (By.CSS_SELECTOR, primary_selector)
-        ))
-        image_element = driver.find_element(By.CSS_SELECTOR, primary_selector)
-    except:
-        image_element = driver.find_element(By.CSS_SELECTOR, fallback_selector)
-        is_fallback = True
-        print("#########################################################")
-
-    image_url = image_element.get_attribute('src')
-    image_url_queue.put((image_index, image_url))
-    if print_urls:
-        print(f"{image_index}. {image_url}")
-
-    if is_fallback:
-        print("#########################################################")
-
-    image_index += 1
     total_images = len(images)
-    while image_index <= total_images:
+    while image_index < total_images:
         is_fallback = False
         try:
-            images[image_index - 1].click()
-
-            WebDriverWait(driver, 10).until(EC.visibility_of_element_located(
+            images[image_index].click()
+            wt = 15 if image_index == 0 else 10
+            WebDriverWait(driver, wt).until(EC.visibility_of_element_located(
                 (By.CSS_SELECTOR, primary_selector)
             ))
             image_element = driver.find_element(
                 By.CSS_SELECTOR, primary_selector)
-            # image_element = driver.find_element(
-            #     By.CSS_SELECTOR, fallback_selector)
-            
-            # ie = driver.find_elements(
-            #     By.CSS_SELECTOR, fallback_selector)
-            # for e in ie:
-            #     print(e.get_attribute("src"))
         except:
-            print("#########################################################")
-            # is_fallback = True
-
+            is_fallback = True
             image_elements = driver.find_elements(
                 By.CSS_SELECTOR, fallback_selector)
             image_element = image_elements[1]
-            # for e in image_elements:
-            #     print(e.get_attribute("src"))
-            # image_title = image_element.get_attribute("alt")
-            # print(f"Image title- {image_title}")
-
-            pass
 
         image_url = image_element.get_attribute('src')
-        if is_fallback:
-            print("image url", image_url)
-            if not image_url.startswith("https://encrypted-tbn0.gstatic.com/"):
-                try:
-                    ie = driver.find_element(
-                        By.CSS_SELECTOR, primary_selector)
-                    print("ie")
-                except:
-                    print('ei')
-                    pass
         image_url_queue.put((image_index, image_url))
-        if print_urls:
-            print(f"{image_index}. {image_url}")
-        image_index += 1
 
-        if is_fallback:
+        if print_urls and is_fallback:
             print("#########################################################")
+        if print_urls:
+            print(f"{image_index + 1}. {image_url}")
+        if print_urls and is_fallback:
+            print("#########################################################")
+        image_index += 1
 
 if __name__ == '__main__':
     query = sys.argv[1]
